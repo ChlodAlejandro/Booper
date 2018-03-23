@@ -81,6 +81,8 @@
             this.textSendBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textSendBox.Size = new System.Drawing.Size(729, 36);
             this.textSendBox.TabIndex = 1;
+            this.textSendBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.chatbox_KeyDown);
+            this.textSendBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.chatbox_KeyUp);
             // 
             // btnSend
             // 

@@ -32,12 +32,15 @@ namespace BooperGUI
         public static String connStatusText = "Not connected.";
         private void BooperGUI_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (serv != null)
+            if (!serv.closed)
             {
                 DialogResult result = MessageBox.Show("Press the button below to stop the server.", "Exiting BooperGUI", MessageBoxButtons.OK);
-                if (client != null)
+                if (!(client == null))
                 {
-                    client.disconnect();
+                    if (!client.disconnected)
+                    {
+                        client.disconnect();
+                    }
                 }
                 serv.forceclose();
             }
@@ -169,6 +172,8 @@ namespace BooperGUI
             Stopwatch escapeStopwatch = new Stopwatch();
             Resize += resize;
             notifyIcon.DoubleClick += reshow;
+            textSendBox.KeyDown += chatbox_KeyDown;
+            textSendBox.KeyUp += chatbox_KeyUp;
             void escape(Object sender, KeyEventArgs e)
             {
                 if (e.KeyCode == Keys.Escape)
@@ -179,7 +184,8 @@ namespace BooperGUI
                         {
                             escaping = false;
                             escapeStopwatch.Reset();
-                        } else
+                        }
+                        else
                         {
                             notifyIcon.Visible = true;
                             Hide();
@@ -189,7 +195,8 @@ namespace BooperGUI
                             }
                             escaping = false;
                         }
-                    } else
+                    }
+                    else
                     {
                         escaping = true;
                         log("ESCAPING!");
@@ -198,81 +205,8 @@ namespace BooperGUI
                 }
                 e.Handled = true;
             }
-            
-            KeyDown += escape; 
-            void btsend(Object sender, EventArgs e)
-            {
-                if (!string.IsNullOrWhiteSpace(chat.Text))
-                {
-                    sendMessage();
-                    textSendBox.Text = "";
-                }
-            }
 
-            void DisconnectServer(Object sender, EventArgs e)
-            {
-                client.disconnect();
-                hostboxEnabled = true;
-                callsignboxEnabled = true;
-                portboxEnabled = true;
-                //passwordboxEnabled = true;
-            }
-
-            void sendMessage()
-            {
-                if (client != null)
-                {
-                    if (!textSendBox.Text.Contains("--ENV"))
-                    {
-                        client.SendDataToServer(client.client, textSendBox.Text);
-                        textSendBox.Text = "";
-                    } else
-                    {
-                        String command = textSendBox.Text;
-                        if (serv != null)
-                        {
-                            /*if (command.Contains("--ENV-tempban: "))
-                            {
-                                command.Replace("--ENV-tempban: ", "");
-                                String[] banargs = command.Split('\\');
-                                if (banargs.Count() == 3)
-                                    serv.tempban(banargs[0], banargs[1], txtCallsign.Text, Int64.Parse(banargs[2]));
-                                else
-                                    log("Invalid command arguments");
-                            }
-                            if (command.Contains("--ENV-ban: "))
-                            {
-                                command.Replace("--ENV-ban: ", "");
-                                String[] banargs = command.Split('\\');
-                                if (banargs.Count() == 2)
-                                    serv.ban(banargs[0], banargs[1], txtCallsign.Text);
-                                else
-                                    log("Invalid command arguments");
-                            }*/
-                            if (command.Contains("--ENV-close"))
-                            {
-                                HandleServer("Manual trigger.", new EventArgs());
-                            }
-                            if (command.Contains("--ENV-help"))
-                            {
-                                log("BooperServer Administrator Commands:");
-                                //log("--ENV-tempban: <callsign>\\<reason>\\<time in seconds> - temporarily ban someone");
-                                //log("--ENV-ban: <callsign>\\<reason> - permanently ban someone");
-                                log("--ENV-close - close the server");
-                            }
-                        } else
-                        {
-                            log("Command not run - not hosting server.");
-                        }
-                    }
-                }
-                else
-                {
-                    log("\n[!] Client not initialized. Connect to a server using the connection menu.");
-                }
-            }
-
-
+            KeyDown += escape;
             async void ConnectServerAsync(Object sender, EventArgs e)
             {
                 connectedButton = false;
@@ -339,6 +273,79 @@ namespace BooperGUI
                 Thread listenThread = new Thread(new ParameterizedThreadStart(HandleClientComm));
                 listenThread.Start(client.getClient());
                 threadLog();
+            }
+        }
+        public void btsend(Object sender, EventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(chat.Text))
+            {
+                sendMessage();
+                textSendBox.Text = "";
+            }
+        }
+
+        public void DisconnectServer(Object sender, EventArgs e)
+        {
+            client.disconnect();
+            hostboxEnabled = true;
+            callsignboxEnabled = true;
+            portboxEnabled = true;
+            //passwordboxEnabled = true;
+        }
+
+        void sendMessage()
+        {
+            if (client != null)
+            {
+                if (!textSendBox.Text.Contains("--ENV"))
+                {
+                    client.SendDataToServer(client.client, textSendBox.Text);
+                    textSendBox.Text = "";
+                }
+                else
+                {
+                    String command = textSendBox.Text;
+                    if (serv != null)
+                    {
+                        /*if (command.Contains("--ENV-tempban: "))
+                        {
+                            command.Replace("--ENV-tempban: ", "");
+                            String[] banargs = command.Split('\\');
+                            if (banargs.Count() == 3)
+                                serv.tempban(banargs[0], banargs[1], txtCallsign.Text, Int64.Parse(banargs[2]));
+                            else
+                                log("Invalid command arguments");
+                        }
+                        if (command.Contains("--ENV-ban: "))
+                        {
+                            command.Replace("--ENV-ban: ", "");
+                            String[] banargs = command.Split('\\');
+                            if (banargs.Count() == 2)
+                                serv.ban(banargs[0], banargs[1], txtCallsign.Text);
+                            else
+                                log("Invalid command arguments");
+                        }*/
+                        if (command.Contains("--ENV-close"))
+                        {
+                            HandleServer("Manual trigger.", new EventArgs());
+                        }
+                        if (command.Contains("--ENV-help"))
+                        {
+                            log("BooperServer Administrator Commands:");
+                            //log("--ENV-tempban: <callsign>\\<reason>\\<time in seconds> - temporarily ban someone");
+                            //log("--ENV-ban: <callsign>\\<reason> - permanently ban someone");
+                            log("--ENV-close - close the server");
+                        }
+                    }
+                    else
+                    {
+                        log("Command not run - not hosting server.");
+                    }
+                }
+            }
+            else
+            {
+                log("\n[!] Client not initialized. Connect to a server using the connection menu.");
             }
         }
 
@@ -413,7 +420,33 @@ namespace BooperGUI
             } else
             {
                 serv.close();
+                serv.closed = true;
                 btnServer.Text = "Start Server";
+            }
+        }
+
+        bool keyshift = false;
+        private void chatbox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Shift)
+            {
+                keyshift = true;
+            }
+            if ((e.KeyCode == Keys.Enter) && keyshift)
+            {
+                textSendBox.AppendText("lolkys");
+                textSendBox.AppendText(Environment.NewLine);
+            } else if (e.KeyCode == Keys.Enter)
+            {
+                sendMessage();
+            }
+        }
+
+        private void chatbox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Shift)
+            {
+                keyshift = false;
             }
         }
     }

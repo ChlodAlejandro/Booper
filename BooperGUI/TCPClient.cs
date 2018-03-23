@@ -125,9 +125,11 @@ namespace BooperGUI
             }
         }
 
+        public bool disconnected;
         public void disconnect()
         {
             SendDataToServer(client, "--ENV-DISconnEct");
+            disconnected = true;
         }
 
         public static string getHashSha256(string text)

@@ -230,7 +230,7 @@ namespace BooperGUI
 
             
         }
-
+        public bool closed;
         private void HandleClientComm(Object clienta)
         {
             TcpClient client = (TcpClient)clienta;
@@ -315,6 +315,7 @@ namespace BooperGUI
                             reply(client, "--ENV__DISCONNECT--(): User has disconnected");
                             connections.Remove(client);
                             client.Close();
+                            closed = true;
                         }
                         if (response.Contains("--ENV-hide"))
                         {
@@ -474,6 +475,7 @@ namespace BooperGUI
             tobeDisconnected = null;
             tcpListener = null;
             listenThread.Abort();
+            closed = true;
         }
         public void forceclose()
         {
